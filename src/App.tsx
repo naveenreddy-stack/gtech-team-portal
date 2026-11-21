@@ -18,8 +18,8 @@ import {
   GraduationCap,
 } from "lucide-react";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL || "").trim();
+const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY || "").trim();
 
 const supabase =
   supabaseUrl && supabaseAnonKey
@@ -78,7 +78,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Login Form State (Credentials provisioned by Admin)
+  // Login Form State
   const [userCode, setUserCode] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
@@ -98,15 +98,21 @@ export default function App() {
   useEffect(() => {
     if (!supabase) {
       setAuthError(
-        "Supabase keys not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel Environment Variables and redeploy."
+        "Supabase keys missing. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel Environment Variables and redeploy."
       );
       setLoading(false);
       return;
     }
 
+    // Hard 3-second fallback so the screen never stalls on loading
+    const fallbackTimer = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
+        clearTimeout(fallbackTimer);
         setSession(session);
         if (session) {
           loadPortalData(session.user.id);
@@ -115,8 +121,11 @@ export default function App() {
         }
       })
       .catch(() => {
+        clearTimeout(fallbackTimer);
         setLoading(false);
       });
+
+    return () => clearTimeout(fallbackTimer);
   }, []);
 
   async function handleLogin(e: React.FormEvent) {
@@ -147,38 +156,43 @@ export default function App() {
     if (!supabase) return;
 
     setLoading(true);
-    const [{ data: prof }, { data: adm }, { data: stu }, { data: uni }] =
-      await Promise.all([
-        supabase.from("profiles").select("*").eq("id", userId).single(),
-        supabase
-          .from("admissions")
-          .select(
-            "*, students(full_name, phone, course_branch), universities(name)"
-          )
-          .eq("team_member_id", userId)
-          .order("submitted_at", { ascending: false }),
-        supabase
-          .from("students")
-          .select("*, universities(name)")
-          .eq("team_member_id", userId)
-          .order("created_at", { ascending: false }),
-        supabase.from("universities").select("*").order("name"),
-      ]);
+    try {
+      const [{ data: prof }, { data: adm }, { data: stu }, { data: uni }] =
+        await Promise.all([
+          supabase.from("profiles").select("*").eq("id", userId).single(),
+          supabase
+            .from("admissions")
+            .select(
+              "*, students(full_name, phone, course_branch), universities(name)"
+            )
+            .eq("team_member_id", userId)
+            .order("submitted_at", { ascending: false }),
+          supabase
+            .from("students")
+            .select("*, universities(name)")
+            .eq("team_member_id", userId)
+            .order("created_at", { ascending: false }),
+          supabase.from("universities").select("*").order("name"),
+        ]);
 
-    if (!prof || !prof.is_active || prof.role !== "team_member") {
-      await supabase.auth.signOut();
-      setSession(null);
-      setProfile(null);
-      setAuthError("Account inactive or unauthorized for gtechteam.online.");
+      if (!prof || !prof.is_active || prof.role !== "team_member") {
+        await supabase.auth.signOut();
+        setSession(null);
+        setProfile(null);
+        setAuthError("Account inactive or unauthorized for gtechteam.online.");
+        setLoading(false);
+        return;
+      }
+
+      setProfile(prof);
+      setAdmissions((adm as Admission[]) || []);
+      setStudents((stu as Student[]) || []);
+      setUniversities((uni as University[]) || []);
+    } catch {
+      setAuthError("Unable to load portal data. Please check your connection.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setProfile(prof);
-    setAdmissions((adm as Admission[]) || []);
-    setStudents((stu as Student[]) || []);
-    setUniversities((uni as University[]) || []);
-    setLoading(false);
   }
 
   async function handleSubmitAdmission(e: React.FormEvent) {
