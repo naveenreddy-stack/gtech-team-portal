@@ -32,16 +32,10 @@
   }
 }
 
-/* Custom Brand Utilities */
 .gtech-banner-gradient {
   background: linear-gradient(135deg, #0A192F 0%, #112240 60%, #1B365D 100%);
 }
 
-.gtech-gold-glow {
-  box-shadow: 0 8px 24px -6px rgba(212, 175, 55, 0.25);
-}
-
-/* Clean Horizontal Table Scrollbar for Mobile & Desktop */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
