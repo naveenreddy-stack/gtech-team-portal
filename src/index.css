@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gtech-navy: #0A192F;
+  --color-gtech-navy-light: #112240;
+  --color-gtech-navy-accent: #1B365D;
+  --color-gtech-gold: #D4AF37;
+  --color-gtech-gold-light: #F3E5AB;
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  a,
+  select,
+  input {
+    touch-action: manipulation;
+  }
+}
+
+/* Custom Brand Utilities */
+.gtech-banner-gradient {
+  background: linear-gradient(135deg, #0A192F 0%, #112240 60%, #1B365D 100%);
+}
+
+.gtech-gold-glow {
+  box-shadow: 0 8px 24px -6px rgba(212, 175, 55, 0.25);
+}
+
+/* Clean Horizontal Table Scrollbar for Mobile & Desktop */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
